@@ -111,7 +111,7 @@ namespace UnityStandardAssets.Characters.FirstPerson
                 if (Physics.Raycast(ray, out hit, Mathf.Infinity))
                 {
                     GameObject hitObject = hit.collider.gameObject;
-                    if (hitObject.tag == "PointOfInterest")
+                    if (hitObject.tag == Tags.pointOfInterest)
                     {
                         target = hitObject.GetComponent<PointOfInterest>().GetPointOfInterestCameraTransform();
                         state = State.MOVING_IN;
