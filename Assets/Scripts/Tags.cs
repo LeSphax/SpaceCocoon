@@ -6,4 +6,7 @@
     public const string pointOfInterest = "PointOfInterest";
 
     public const string PlanetSystemPlane = "PlanetSystemPlane";
+
+
+    public const string GameController = "GameController";
 }
