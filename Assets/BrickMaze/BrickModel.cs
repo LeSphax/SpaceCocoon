@@ -1,27 +1,26 @@
-﻿using System;
+﻿
+using System;
 using UnityEngine;
 
-class BrickModel
+public class BrickModel : MonoBehaviour
 {
 
     private int posX;
     private int posY;
 
-    private GameObject gameobject;
-
     private BoardModel boardModel;
     private BrickView view;
 
-    public BrickModel(int posX, int posY, GameObject gameobject, BoardModel controller)
+    public TileModel.Type objectiveType = TileModel.Type.NONE;
+
+    internal void Init(int x, int y, BoardModel boardModel)
     {
-        Debug.Log("Il faudrait que les briques soient positionnées plus haut pour ne pas rentrer dans les tuiles");
-        this.gameobject = gameobject;
-        this.boardModel = controller;
-        view = gameobject.GetComponent<BrickView>();
+        this.boardModel = boardModel;
+        view = gameObject.GetComponent<BrickView>();
         //
         //
-        this.posX = posX;
-        this.posY = posY;
+        this.posX = x;
+        this.posY = y;
         view.SetPosition(GetWorldPosition());
     }
 
@@ -38,7 +37,7 @@ class BrickModel
         return boardModel.GetWorldPosition(posX, posY);
     }
 
-    internal void Move(InputManager.Direction direction)
+    internal virtual void Move(InputManager.Direction direction)
     {
         Vector2 newBoardTarget = new Vector2(posX, posY);
         if (direction == InputManager.Direction.UP)
@@ -48,6 +47,10 @@ class BrickModel
                 if (boardModel.IsTileEmpty(posX, i))
                 {
                     newBoardTarget = new Vector2(posX, i);
+                }
+                else
+                {
+                    break;
                 }
             }
         }
@@ -59,6 +62,10 @@ class BrickModel
                 {
                     newBoardTarget = new Vector2(posX, i);
                 }
+                else
+                {
+                    break;
+                }
             }
         }
         else if (direction == InputManager.Direction.RIGHT)
@@ -68,6 +75,10 @@ class BrickModel
                 if (boardModel.IsTileEmpty(i, posY))
                 {
                     newBoardTarget = new Vector2(i, posY);
+                }
+                else
+                {
+                    break;
                 }
             }
         }
@@ -79,10 +90,19 @@ class BrickModel
                 {
                     newBoardTarget = new Vector2(i, posY);
                 }
+                else
+                {
+                    break;
+                }
             }
         }
         if (newBoardTarget.x != posX || newBoardTarget.y != posY)
             SetPosition((int)newBoardTarget.x, (int)newBoardTarget.y);
+    }
+
+    internal void FillObjective()
+    {
+        Destroy(gameObject);
     }
 }
 

@@ -13,6 +13,10 @@ public class BoardModel : MonoBehaviour
 
     public GameObject tilePrefab;
     public GameObject brickPrefab;
+    public GameObject wallPrefab;
+
+    public GameObject[] tiles;
+    public GameObject[] bricks;
 
     private BoardPosition[,] board;
 
@@ -34,25 +38,30 @@ public class BoardModel : MonoBehaviour
             for (int y = 0; y < numberTileY; y++)
             {
                 Vector3 position = GetWorldPosition(x, y);
-                GameObject newTile = (GameObject)Instantiate(tilePrefab, position, Quaternion.identity);
-                BrickModel brick;
-                if (x == 0 && y == 0)
+                TileModel tile = null;
+                BrickModel brick = null;
+                int index = y + x * numberTileX;
+                if (tiles[index] == null)
                 {
-                    Debug.Log("Il faut déterminer comment créer les niveaux et tester de voir si tout fonctionne bien avec plusieurs briques");
-                    GameObject brickGameObject = (GameObject)Instantiate(brickPrefab, position + Vector3.up * 0.2f, Quaternion.identity);
-                    brick = new BrickModel(x, y, brickGameObject, this);
+                    tile = ((GameObject)Instantiate(tilePrefab, position, Quaternion.identity)).GetComponent<TileModel>();
                 }
                 else
                 {
-                    brick = null;
+                    tile = ((GameObject)Instantiate(tiles[index], position, Quaternion.identity)).GetComponent<TileModel>();
                 }
-                board[x, y] = new BoardPosition(newTile, brick);
+                if (bricks[index] != null)
+                {
+                    brick = ((GameObject)Instantiate(bricks[index], position, Quaternion.identity)).GetComponent<BrickModel>();
+                    brick.Init(x, y, this);
+                }
+                board[x, y] = new BoardPosition(tile, brick);
             }
         }
     }
 
     internal void MoveBrick(int posX, int posY, int newPosX, int newPosY)
     {
+        //printBoard();
         if (IsTileEmpty(newPosX, newPosY))
         {
             board[newPosX, newPosY].brick = board[posX, posY].brick;
@@ -62,6 +71,14 @@ public class BoardModel : MonoBehaviour
         {
             Debug.LogError("BoardModel.MoveBrick(" + posX + "," + posY + "," + newPosX + "," + newPosY + ") : The target tile should be empty");
         }
+        Debug.Log(board[newPosX, newPosY].tile.getType());
+        Debug.Log(board[newPosX, newPosY].brick.objectiveType);
+        if (board[newPosX,newPosY].tile.getType() == board[newPosX, newPosY].brick.objectiveType)
+        {
+            board[newPosX, newPosY].brick.FillObjective();
+            board[newPosX, newPosY].tile.SetType(TileModel.Type.FILLED_OBJECTIVE);
+        }
+       // printBoard();
     }
 
     internal Vector3 GetWorldPosition(int posX, int posY)
@@ -75,29 +92,6 @@ public class BoardModel : MonoBehaviour
         InputManager.Direction direction = inputManager.GetDirection();
         if (direction == InputManager.Direction.UP)
         {
-            for (int x = numberTileX - 1; x >= 0; x--)
-            {
-                for (int y = 0; y < numberTileY; y++)
-                {
-                    if (!IsTileEmpty(x, y))
-                        board[x, y].brick.Move(direction);
-                }
-            }
-        }
-        else if (direction == InputManager.Direction.DOWN)
-        {
-            for (int x = 0; x < numberTileX; x++)
-            {
-                for (int y = 0; y < numberTileY; y++)
-                {
-
-                    if (!IsTileEmpty(x, y))
-                        board[x, y].brick.Move(direction);
-                }
-            }
-        }
-        else if (direction == InputManager.Direction.RIGHT)
-        {
             for (int y = numberTileY - 1; y >= 0; y--)
             {
                 for (int x = 0; x < numberTileY; x++)
@@ -107,11 +101,33 @@ public class BoardModel : MonoBehaviour
                 }
             }
         }
-        else if (direction == InputManager.Direction.LEFT)
+        else if (direction == InputManager.Direction.DOWN)
         {
             for (int y = 0; y < numberTileY; y++)
             {
                 for (int x = 0; x < numberTileY; x++)
+                {
+                    if (!IsTileEmpty(x, y))
+                        board[x, y].brick.Move(direction);
+                }
+            }
+        }
+        else if (direction == InputManager.Direction.RIGHT)
+        {
+            for (int x = numberTileX - 1; x >= 0; x--)
+            {
+                for (int y = 0; y < numberTileY; y++)
+                {
+                    if (!IsTileEmpty(x, y))
+                        board[x, y].brick.Move(direction);
+                }
+            }
+        }
+        else if (direction == InputManager.Direction.LEFT)
+        {
+            for (int x = 0; x < numberTileX; x++)
+            {
+                for (int y = 0; y < numberTileY; y++)
                 {
                     if (!IsTileEmpty(x, y))
                         board[x, y].brick.Move(direction);
@@ -126,15 +142,39 @@ public class BoardModel : MonoBehaviour
         return board[x, y].brick == null;
     }
 
-    private class BoardPosition
+    internal void printBoard()
     {
-        public GameObject tile;
+        string message = "";
+        for (int y = 0; y < numberTileY; y++)
+        {
+            for (int x = 0; x < numberTileY; x++)
+            {
+                message += board[x, y].brick.objectiveType + ",";
+            }
+            message += "\n";
+        }
+        Debug.Log(message);
+    }
+
+    public class BoardPosition
+    {
+        public TileModel tile;
         public BrickModel brick;
 
-        public BoardPosition(GameObject tile, BrickModel brick)
+        public BoardPosition(TileModel tile, BrickModel brick)
         {
             this.tile = tile;
             this.brick = brick;
         }
+
+        public override string ToString()
+        {
+            return (brick == null).ToString();
+        }
+    }
+
+    public class BoardPositionArray
+    {
+        public BoardPosition[] array;
     }
 }

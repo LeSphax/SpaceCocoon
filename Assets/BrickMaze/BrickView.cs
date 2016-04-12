@@ -4,14 +4,13 @@ using System.Collections.Generic;
 public class BrickView : MonoBehaviour
 {
 
-    private enum State
-    {
-        IDLE,
-        MOVING
-    }
+    //private enum State
+    //{
+    //    IDLE,
+    //    MOVING
+    //}
 
-    private State state;
-    private bool finishedAnimation;
+    ////private State state;
     private Vector3 currentVelocity = Vector3.zero;
 
     private Queue<Vector3> targets;
@@ -26,59 +25,60 @@ public class BrickView : MonoBehaviour
 
     public void SetPosition(Vector3 position)
     {
-        transform.localPosition = position;
+        transform.localPosition = position + Vector3.up * 0.3f;
     }
 
     public void SetTarget(Vector3 target)
     {
-        targets.Enqueue(target);
+        targets.Enqueue(target + Vector3.up * 0.3f);
     }
 
     // Update is called once per frame
     void Update()
     {
-        switch (state)
-        {
-            case State.IDLE:
-                if (finishedAnimation)
-                {
-                    //if (transform.localPosition.y > 0)
-                    //{
-                    //    targets.Enqueue(transform.position + Vector3.down * 0.1f);
-                    //    finishedAnimation = false;
-                    //}
-                    //else
-                    //{
-                    //    targets.Enqueue(transform.position + Vector3.up * 0.1f);
-                    //    finishedAnimation = false;
-                    //}
-                }
-                break;
-            case State.MOVING:
-                if (finishedAnimation)
-                {
-                    SetIdleState();
-                }
-                break;
-            default:
-                break;
-        }
+        //switch (state)
+        //{
+        //    case State.IDLE:
+        //        if (finishedAnimation)
+        //        {
+        //            //if (transform.localPosition.y > 0)
+        //            //{
+        //            //    targets.Enqueue(transform.position + Vector3.down * 0.1f);
+        //            //    finishedAnimation = false;
+        //            //}
+        //            //else
+        //            //{
+        //            //    targets.Enqueue(transform.position + Vector3.up * 0.1f);
+        //            //    finishedAnimation = false;
+        //            //}
+        //        }
+        //        break;
+        //    case State.MOVING:
+        //        if (finishedAnimation)
+        //        {
+        //            SetIdleState();
+        //        }
+        //        break;
+        //    default:
+        //        break;
+        //}
         if (targets.Count > 0)
         {
-            Debug.Log("Le mouvement des briques est trop rapide, il faudrait voir pourquoi le SmoothDamp ne fonctionne pas");
+           // Debug.Log("Le mouvement des briques est trop rapide, il faudrait voir pourquoi le SmoothDamp ne fonctionne pas");
             transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targets.Peek(), ref currentVelocity, Time.deltaTime * speed);
 
             if (Mathf.Approximately(Vector3.Distance(transform.localPosition, targets.Peek()), 0))
             {
                 targets.Dequeue();
                 currentVelocity = Vector3.zero;
+                
             }
         }
     }
 
-    private void SetIdleState()
-    {
-        state = State.IDLE;
-        speed = SPEED_IDLE;
-    }
+    //private void SetIdleState()
+    //{
+    //    state = State.IDLE;
+    //    speed = SPEED_IDLE;
+    //}
 }
