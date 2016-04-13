@@ -1,9 +1,10 @@
-﻿
-using System;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BrickModel : MonoBehaviour
 {
+
 
     private int posX;
     private int posY;
@@ -11,7 +12,23 @@ public class BrickModel : MonoBehaviour
     private BoardModel boardModel;
     private BrickView view;
 
+    private bool fusionned = false;
+
+    internal Vector2 getPosition()
+    {
+        return new Vector2(posX, posY);
+    }
+
+    private Queue<Vector3> targetPositions;
+
     public TileModel.Type objectiveType = TileModel.Type.NONE;
+
+
+
+    void Awake()
+    {
+        targetPositions = new Queue<Vector3>();
+    }
 
     internal void Init(int x, int y, BoardModel boardModel)
     {
@@ -29,7 +46,13 @@ public class BrickModel : MonoBehaviour
         boardModel.MoveBrick(posX, posY, newPosX, newPosY);
         this.posX = newPosX;
         this.posY = newPosY;
-        view.SetTarget(GetWorldPosition());
+        if (boardModel.getTile(newPosX, newPosY).getType() == objectiveType)
+        {
+            FillObjective();
+
+        }
+        targetPositions.Enqueue(GetWorldPosition());
+        view.SetTarget(targetPositions.Peek());
     }
 
     private Vector3 GetWorldPosition()
@@ -100,9 +123,42 @@ public class BrickModel : MonoBehaviour
             SetPosition((int)newBoardTarget.x, (int)newBoardTarget.y);
     }
 
+    internal virtual void MoveBack(int oldPosX, int oldPosY)
+    {
+        if (fusionned)
+        {
+            UnFillObjective();
+        }
+        SetPosition(oldPosX, oldPosY);
+    }
+
+    internal void ViewReachedTarget()
+    {
+        targetPositions.Dequeue();
+        if (targetPositions.Count > 0)
+        {
+            view.SetTarget(targetPositions.Peek());
+        }
+        else if (fusionned)
+        {
+            GetComponent<Renderer>().enabled = false;
+        }
+    }
+
     internal void FillObjective()
     {
-        Destroy(gameObject);
+        boardModel.getTile(posX, posY).SetType(TileModel.Type.FILLED_OBJECTIVE);
+        boardModel.RemoveBrick(posX, posY);
+        fusionned = true;
     }
+
+    private void UnFillObjective()
+    {
+        boardModel.getTile(posX, posY).SetType(objectiveType);
+        boardModel.AddBrick(this,posX, posY);
+        GetComponent<Renderer>().enabled = true;
+        fusionned = false;
+    }
+
 }
 

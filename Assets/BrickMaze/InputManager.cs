@@ -2,6 +2,8 @@
 
 class InputManager : MonoBehaviour
 {
+    private BoardModel board;
+
     public enum Direction
     {
         UP, DOWN, RIGHT, LEFT,
@@ -10,7 +12,19 @@ class InputManager : MonoBehaviour
 
     void Start()
     {
+        board = GameObject.FindGameObjectWithTag("GameController").GetComponent<BoardModel>();
+    }
 
+    void Update()
+    {
+        if (Input.GetButtonDown(InputButtonNames.CANCEL))
+        {
+            board.CancelLastMovement();
+        }
+        else if (Input.GetButtonDown(InputButtonNames.RESET))
+        {
+            board.Reset();
+        }
     }
 
     public Direction GetDirection()

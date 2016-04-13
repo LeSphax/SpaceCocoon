@@ -1,26 +1,27 @@
 ﻿using UnityEngine;
-using System.Collections.Generic;
 
 public class BrickView : MonoBehaviour
 {
 
-    //private enum State
-    //{
-    //    IDLE,
-    //    MOVING
-    //}
+    internal enum State
+    {
+        IDLE,
+        MOVING
+    }
 
-    ////private State state;
-    private Vector3 currentVelocity = Vector3.zero;
+    private State state;
+    private float currentVelocity = 0;
+    private Vector3 currentStartPosition = Vector3.zero;
 
-    private Queue<Vector3> targets;
-    private float speed = 0.2f;
-    private const float SPEED_IDLE = 3;
+    BrickModel model;
+
+    private Vector3 target;
+    private float rateLerp = 1 / 0.2f;
 
     void Awake()
     {
-        
-        targets = new Queue<Vector3>();
+        model = GetComponent<BrickModel>();
+        state = State.IDLE;
     }
 
     public void SetPosition(Vector3 position)
@@ -30,55 +31,47 @@ public class BrickView : MonoBehaviour
 
     public void SetTarget(Vector3 target)
     {
-        targets.Enqueue(target + Vector3.up * 0.3f);
+        state = State.MOVING;
+        currentStartPosition = transform.localPosition;
+        this.target = target + Vector3.up * 0.3f;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //switch (state)
-        //{
-        //    case State.IDLE:
-        //        if (finishedAnimation)
-        //        {
-        //            //if (transform.localPosition.y > 0)
-        //            //{
-        //            //    targets.Enqueue(transform.position + Vector3.down * 0.1f);
-        //            //    finishedAnimation = false;
-        //            //}
-        //            //else
-        //            //{
-        //            //    targets.Enqueue(transform.position + Vector3.up * 0.1f);
-        //            //    finishedAnimation = false;
-        //            //}
-        //        }
-        //        break;
-        //    case State.MOVING:
-        //        if (finishedAnimation)
-        //        {
-        //            SetIdleState();
-        //        }
-        //        break;
-        //    default:
-        //        break;
-        //}
-        if (targets.Count > 0)
+        switch (state)
         {
-           // Debug.Log("Le mouvement des briques est trop rapide, il faudrait voir pourquoi le SmoothDamp ne fonctionne pas");
-            transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targets.Peek(), ref currentVelocity, Time.deltaTime * speed);
+            case State.IDLE:
+                break;
+            case State.MOVING:
+                if (currentVelocity < 1.0)
+                {
+                    currentVelocity += Time.deltaTime * rateLerp;
+                    transform.localPosition = Vector3.Lerp(currentStartPosition, target, currentVelocity);
+                }
+                else if (Mathf.Approximately(Vector3.Distance(transform.localPosition, target), 0))
+                {
+                    SetState(State.IDLE);
+                    Reset();
+                    model.ViewReachedTarget();
 
-            if (Mathf.Approximately(Vector3.Distance(transform.localPosition, targets.Peek()), 0))
-            {
-                targets.Dequeue();
-                currentVelocity = Vector3.zero;
-                
-            }
+                }
+                break;
+            default:
+                break;
         }
+        // Debug.Log("Le mouvement des briques est trop rapide, il faudrait voir pourquoi le SmoothDamp ne fonctionne pas");
+
     }
 
-    //private void SetIdleState()
-    //{
-    //    state = State.IDLE;
-    //    speed = SPEED_IDLE;
-    //}
+    internal void SetState(State state)
+    {
+        this.state = state;
+    }
+
+
+    private void Reset()
+    {
+        currentVelocity = 0;
+    }
 }

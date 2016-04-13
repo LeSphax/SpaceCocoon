@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 using System;
 
 public class BoardModel : MonoBehaviour
@@ -12,15 +12,37 @@ public class BoardModel : MonoBehaviour
     public int numberTileY;
 
     public GameObject tilePrefab;
-    public GameObject brickPrefab;
-    public GameObject wallPrefab;
 
     public GameObject[] tiles;
     public GameObject[] bricks;
 
     private BoardPosition[,] board;
 
+    private Stack<Stack<ICommand>> history;
+    private Stack<ICommand> currentTurnCommands;
+
+
     private InputManager inputManager;
+
+    internal void CancelLastMovement()
+    {
+        if (history.Count > 0)
+        {
+            Stack<ICommand> lastTurnCommands = history.Pop();
+            while (lastTurnCommands.Count > 0)
+            {
+                lastTurnCommands.Pop().Undo();
+            }
+        }
+    }
+
+    internal void Reset()
+    {
+        while (history.Count > 0)
+        {
+            CancelLastMovement();
+        }
+    }
 
 
     void Awake()
@@ -28,11 +50,22 @@ public class BoardModel : MonoBehaviour
         inputManager = GameObject.FindGameObjectWithTag(Tags.GameController).GetComponent<InputManager>();
     }
 
+    internal TileModel getTile(int posX, int posY)
+    {
+        return board[posX, posY].tile;
+    }
+
 
     // Use this for initialization
     void Start()
     {
+        CreateBoard();
+    }
+
+    private void CreateBoard()
+    {
         board = new BoardPosition[numberTileX, numberTileY];
+        history = new Stack<Stack<ICommand>>();
         for (int x = 0; x < numberTileX; x++)
         {
             for (int y = 0; y < numberTileY; y++)
@@ -59,9 +92,9 @@ public class BoardModel : MonoBehaviour
         }
     }
 
+
     internal void MoveBrick(int posX, int posY, int newPosX, int newPosY)
     {
-        //printBoard();
         if (IsTileEmpty(newPosX, newPosY))
         {
             board[newPosX, newPosY].brick = board[posX, posY].brick;
@@ -71,14 +104,6 @@ public class BoardModel : MonoBehaviour
         {
             Debug.LogError("BoardModel.MoveBrick(" + posX + "," + posY + "," + newPosX + "," + newPosY + ") : The target tile should be empty");
         }
-        Debug.Log(board[newPosX, newPosY].tile.getType());
-        Debug.Log(board[newPosX, newPosY].brick.objectiveType);
-        if (board[newPosX,newPosY].tile.getType() == board[newPosX, newPosY].brick.objectiveType)
-        {
-            board[newPosX, newPosY].brick.FillObjective();
-            board[newPosX, newPosY].tile.SetType(TileModel.Type.FILLED_OBJECTIVE);
-        }
-       // printBoard();
     }
 
     internal Vector3 GetWorldPosition(int posX, int posY)
@@ -90,14 +115,24 @@ public class BoardModel : MonoBehaviour
     void Update()
     {
         InputManager.Direction direction = inputManager.GetDirection();
+        if (direction != InputManager.Direction.NONE)
+        {
+            currentTurnCommands = new Stack<ICommand>();
+            MoveBricks(direction);
+            history.Push(currentTurnCommands);
+        }
+
+    }
+
+    private void MoveBricks(InputManager.Direction direction)
+    {
         if (direction == InputManager.Direction.UP)
         {
             for (int y = numberTileY - 1; y >= 0; y--)
             {
                 for (int x = 0; x < numberTileY; x++)
                 {
-                    if (!IsTileEmpty(x, y))
-                        board[x, y].brick.Move(direction);
+                    MoveBrick(direction, x, y);
                 }
             }
         }
@@ -107,8 +142,7 @@ public class BoardModel : MonoBehaviour
             {
                 for (int x = 0; x < numberTileY; x++)
                 {
-                    if (!IsTileEmpty(x, y))
-                        board[x, y].brick.Move(direction);
+                    MoveBrick(direction, x, y);
                 }
             }
         }
@@ -118,8 +152,7 @@ public class BoardModel : MonoBehaviour
             {
                 for (int y = 0; y < numberTileY; y++)
                 {
-                    if (!IsTileEmpty(x, y))
-                        board[x, y].brick.Move(direction);
+                    MoveBrick(direction, x, y);
                 }
             }
         }
@@ -129,12 +162,34 @@ public class BoardModel : MonoBehaviour
             {
                 for (int y = 0; y < numberTileY; y++)
                 {
-                    if (!IsTileEmpty(x, y))
-                        board[x, y].brick.Move(direction);
+
+                    MoveBrick(direction, x, y);
                 }
             }
         }
+    }
 
+    private void MoveBrick(InputManager.Direction direction, int y, int x)
+    {
+        if (!IsTileEmpty(x, y))
+        {
+            BrickMoveCommand moveCommand = new BrickMoveCommand(board[x, y].brick, direction);
+            moveCommand.Execute();
+            if (moveCommand.WasUseful())
+            {
+                currentTurnCommands.Push(moveCommand);
+            }
+        }
+    }
+
+    internal void RemoveBrick(int x, int y)
+    {
+        board[x, y].brick = null;
+    }
+
+    internal void AddBrick(BrickModel brickModel, int x, int y)
+    {
+        board[x, y].brick = brickModel;
     }
 
     internal bool IsTileEmpty(int x, int y)
@@ -173,8 +228,4 @@ public class BoardModel : MonoBehaviour
         }
     }
 
-    public class BoardPositionArray
-    {
-        public BoardPosition[] array;
-    }
 }
