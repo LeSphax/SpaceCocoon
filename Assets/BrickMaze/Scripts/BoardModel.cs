@@ -47,7 +47,7 @@ public class BoardModel : MonoBehaviour
 
     void Awake()
     {
-        inputManager = GameObject.FindGameObjectWithTag(Tags.GameController).GetComponent<InputManager>();
+        inputManager = GetComponent<InputManager>();
     }
 
     internal TileModel getTile(int posX, int posY)
@@ -77,15 +77,18 @@ public class BoardModel : MonoBehaviour
                 if (tiles[index] == null)
                 {
                     tile = ((GameObject)Instantiate(tilePrefab, position, Quaternion.identity)).GetComponent<TileModel>();
+                    tile.transform.SetParent(transform, false);
                 }
                 else
                 {
                     tile = ((GameObject)Instantiate(tiles[index], position, Quaternion.identity)).GetComponent<TileModel>();
+                    tile.transform.SetParent(transform, false);
                 }
                 if (bricks[index] != null)
                 {
                     brick = ((GameObject)Instantiate(bricks[index], position, Quaternion.identity)).GetComponent<BrickModel>();
                     brick.Init(x, y, this);
+                    brick.gameObject.transform.SetParent(transform, false);
                 }
                 board[x, y] = new BoardPosition(tile, brick);
             }
@@ -120,6 +123,7 @@ public class BoardModel : MonoBehaviour
             currentTurnCommands = new Stack<ICommand>();
             MoveBricks(direction);
             history.Push(currentTurnCommands);
+            CheckIfWon();
         }
 
     }
@@ -179,6 +183,25 @@ public class BoardModel : MonoBehaviour
             {
                 currentTurnCommands.Push(moveCommand);
             }
+        }
+    }
+
+    private void CheckIfWon()
+    {
+        bool won = true;
+        for (int x = 0; x < numberTileX; x++)
+        {
+            for (int y = 0; y < numberTileY; y++)
+            {
+                if (board[x, y].tile.getType() == TileModel.Type.OBJECTIVE1 || board[x, y].tile.getType() == TileModel.Type.OBJECTIVE2)
+                {
+                    won = false;
+                }
+            }
+        }
+        if (won)
+        {
+            GameObject.FindGameObjectWithTag(Tags.GameController).GetComponent<LevelLoader>().LoadNextLevel();
         }
     }
 

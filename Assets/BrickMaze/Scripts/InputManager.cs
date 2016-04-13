@@ -12,7 +12,7 @@ class InputManager : MonoBehaviour
 
     void Start()
     {
-        board = GameObject.FindGameObjectWithTag("GameController").GetComponent<BoardModel>();
+        board = GetComponent<BoardModel>();
     }
 
     void Update()

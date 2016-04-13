@@ -7,6 +7,6 @@
 
     public const string PlanetSystemPlane = "PlanetSystemPlane";
 
-
+    public const string LevelController = "LevelController";
     public const string GameController = "GameController";
 }
