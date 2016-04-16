@@ -3,11 +3,16 @@
 class WallBrick : BrickModel
 {
 
-    internal override void Move(InputManager.Direction direction)
+    public override void Move(InputManager.Direction direction)
     {
     }
 
-    internal override void MoveBack(int oldPosX, int oldPosY)
+    public override void MoveBack(int oldPosX, int oldPosY)
     {
+    }
+
+    public override string ToString()
+    {
+        return "WallBrick";
     }
 }

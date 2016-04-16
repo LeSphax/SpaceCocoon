@@ -21,8 +21,7 @@ public class BoardModel : MonoBehaviour
     private Stack<Stack<ICommand>> history;
     private Stack<ICommand> currentTurnCommands;
 
-
-    private InputManager inputManager;
+    private bool won;
 
     internal void CancelLastMovement()
     {
@@ -42,12 +41,6 @@ public class BoardModel : MonoBehaviour
         {
             CancelLastMovement();
         }
-    }
-
-
-    void Awake()
-    {
-        inputManager = GetComponent<InputManager>();
     }
 
     internal TileModel getTile(int posX, int posY)
@@ -72,7 +65,7 @@ public class BoardModel : MonoBehaviour
             {
                 Vector3 position = GetWorldPosition(x, y);
                 TileModel tile = null;
-                BrickModel brick = null;
+                IBrickModel brick = null;
                 int index = y + x * numberTileX;
                 if (tiles[index] == null)
                 {
@@ -88,9 +81,14 @@ public class BoardModel : MonoBehaviour
                 {
                     brick = ((GameObject)Instantiate(bricks[index], position, Quaternion.identity)).GetComponent<BrickModel>();
                     brick.Init(x, y, this);
-                    brick.gameObject.transform.SetParent(transform, false);
                 }
+                else
+                {
+                    brick = new EmptyBrick();
+                }
+
                 board[x, y] = new BoardPosition(tile, brick);
+                Debug.Log(index + " : " + board[x, y] + "    " + brick + "   " + tile.gameObject.name);
             }
         }
     }
@@ -101,7 +99,7 @@ public class BoardModel : MonoBehaviour
         if (IsTileEmpty(newPosX, newPosY))
         {
             board[newPosX, newPosY].brick = board[posX, posY].brick;
-            board[posX, posY].brick = null;
+            RemoveBrick(posX, posY);
         }
         else
         {
@@ -114,18 +112,17 @@ public class BoardModel : MonoBehaviour
         return new Vector3(posX * sizeX, 0, posY * sizeY);
     }
 
-    // Update is called once per frame
-    void Update()
+
+    public void Move(InputManager.Direction direction)
     {
-        InputManager.Direction direction = inputManager.GetDirection();
-        if (direction != InputManager.Direction.NONE)
+        if (!won)
         {
             currentTurnCommands = new Stack<ICommand>();
             MoveBricks(direction);
             history.Push(currentTurnCommands);
             CheckIfWon();
         }
-
+        printBoard();
     }
 
     private void MoveBricks(InputManager.Direction direction)
@@ -173,7 +170,7 @@ public class BoardModel : MonoBehaviour
         }
     }
 
-    private void MoveBrick(InputManager.Direction direction, int y, int x)
+    private void MoveBrick(InputManager.Direction direction, int x, int y)
     {
         if (!IsTileEmpty(x, y))
         {
@@ -188,7 +185,7 @@ public class BoardModel : MonoBehaviour
 
     private void CheckIfWon()
     {
-        bool won = true;
+        won = true;
         for (int x = 0; x < numberTileX; x++)
         {
             for (int y = 0; y < numberTileY; y++)
@@ -207,17 +204,17 @@ public class BoardModel : MonoBehaviour
 
     internal void RemoveBrick(int x, int y)
     {
-        board[x, y].brick = null;
+        board[x, y].brick = new EmptyBrick();
     }
 
-    internal void AddBrick(BrickModel brickModel, int x, int y)
+    internal void AddBrick(IBrickModel brickModel, int x, int y)
     {
         board[x, y].brick = brickModel;
     }
 
     internal bool IsTileEmpty(int x, int y)
     {
-        return board[x, y].brick == null;
+        return board[x, y].brick.IsEmpty();
     }
 
     internal void printBoard()
@@ -227,19 +224,32 @@ public class BoardModel : MonoBehaviour
         {
             for (int x = 0; x < numberTileY; x++)
             {
-                message += board[x, y].brick.objectiveType + ",";
+                if (board[x, y].brick != null)
+                {
+                    Debug.Log("Board[" + x + "," + y + "].Brick :" + board[x, y].brick);
+                    message += board[x, y].brick + ",";
+                }
+                else if (board[x, y] != null)
+                {
+                    Debug.Log("Board[" + x + "," + y + "] :");
+                }
+                else
+                {
+                    Debug.Log("Board[" + x + "," + y + "] NULL");
+                }
+
             }
             message += "\n";
         }
         Debug.Log(message);
     }
 
-    public class BoardPosition
+    internal class BoardPosition
     {
         public TileModel tile;
-        public BrickModel brick;
+        public IBrickModel brick;
 
-        public BoardPosition(TileModel tile, BrickModel brick)
+        public BoardPosition(TileModel tile, IBrickModel brick)
         {
             this.tile = tile;
             this.brick = brick;
@@ -247,7 +257,12 @@ public class BoardModel : MonoBehaviour
 
         public override string ToString()
         {
-            return (brick == null).ToString();
+            if (brick != null)
+                return brick.ToString();
+            else
+            {
+                return "null";
+            }
         }
     }
 

@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 class BrickMoveCommand : ICommand
 {
-    private BrickModel brick;
+    private IBrickModel brick;
     private InputManager.Direction direction;
 
     private Vector2 oldBrickPosition;
     private Vector2 newBrickPosition;
 
-    public BrickMoveCommand(BrickModel brick, InputManager.Direction direction)
+    public BrickMoveCommand(IBrickModel brick, InputManager.Direction direction)
     {
         this.brick = brick;
         this.direction = direction;
@@ -15,9 +15,9 @@ class BrickMoveCommand : ICommand
 
     public void Execute()
     {
-        oldBrickPosition = brick.getPosition();
+        oldBrickPosition = brick.GetPosition();
         brick.Move(direction);
-        newBrickPosition = brick.getPosition();
+        newBrickPosition = brick.GetPosition();
     }
 
     public void Undo()

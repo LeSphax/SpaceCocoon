@@ -31,6 +31,7 @@ public class BrickView : MonoBehaviour
 
     public void SetTarget(Vector3 target)
     {
+        Debug.Log("SetTarget" + model.objectiveType +"   "+ target);
         state = State.MOVING;
         currentStartPosition = transform.localPosition;
         this.target = target + Vector3.up * 0.3f;
@@ -49,19 +50,17 @@ public class BrickView : MonoBehaviour
                     currentVelocity += Time.deltaTime * rateLerp;
                     transform.localPosition = Vector3.Lerp(currentStartPosition, target, currentVelocity);
                 }
-                else if (Mathf.Approximately(Vector3.Distance(transform.localPosition, target), 0))
+                else
                 {
+                    transform.localPosition = Vector3.Lerp(currentStartPosition, target, 1);
                     SetState(State.IDLE);
                     Reset();
                     model.ViewReachedTarget();
-
                 }
                 break;
             default:
                 break;
         }
-        // Debug.Log("Le mouvement des briques est trop rapide, il faudrait voir pourquoi le SmoothDamp ne fonctionne pas");
-
     }
 
     internal void SetState(State state)

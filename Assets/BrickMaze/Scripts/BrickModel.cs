@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BrickModel : MonoBehaviour
+public class BrickModel : MonoBehaviour, IBrickModel
 {
 
 
@@ -14,7 +14,7 @@ public class BrickModel : MonoBehaviour
 
     private bool fusionned = false;
 
-    internal Vector2 getPosition()
+    public Vector2 GetPosition()
     {
         return new Vector2(posX, posY);
     }
@@ -23,6 +23,11 @@ public class BrickModel : MonoBehaviour
 
     public TileModel.Type objectiveType = TileModel.Type.NONE;
 
+    public TileModel.Type GetObjectiveType()
+    {
+        return objectiveType;
+    }
+
 
 
     void Awake()
@@ -30,9 +35,10 @@ public class BrickModel : MonoBehaviour
         targetPositions = new Queue<Vector3>();
     }
 
-    internal void Init(int x, int y, BoardModel boardModel)
+    public void Init(int x, int y, BoardModel boardModel)
     {
         this.boardModel = boardModel;
+        gameObject.transform.SetParent(boardModel.transform, false);
         view = gameObject.GetComponent<BrickView>();
         //
         //
@@ -49,9 +55,9 @@ public class BrickModel : MonoBehaviour
         if (boardModel.getTile(newPosX, newPosY).getType() == objectiveType)
         {
             FillObjective();
-
         }
         targetPositions.Enqueue(GetWorldPosition());
+        Debug.Log("SetPosition " + targetPositions.Count);
         view.SetTarget(targetPositions.Peek());
     }
 
@@ -60,7 +66,7 @@ public class BrickModel : MonoBehaviour
         return boardModel.GetWorldPosition(posX, posY);
     }
 
-    internal virtual void Move(InputManager.Direction direction)
+    public virtual void Move(InputManager.Direction direction)
     {
         Vector2 newBoardTarget = new Vector2(posX, posY);
         if (direction == InputManager.Direction.UP)
@@ -123,7 +129,7 @@ public class BrickModel : MonoBehaviour
             SetPosition((int)newBoardTarget.x, (int)newBoardTarget.y);
     }
 
-    internal virtual void MoveBack(int oldPosX, int oldPosY)
+    public virtual void MoveBack(int oldPosX, int oldPosY)
     {
         if (fusionned)
         {
@@ -134,6 +140,7 @@ public class BrickModel : MonoBehaviour
 
     internal void ViewReachedTarget()
     {
+        Debug.Log("ReachedTarget " + objectiveType);
         targetPositions.Dequeue();
         if (targetPositions.Count > 0)
         {
@@ -158,6 +165,16 @@ public class BrickModel : MonoBehaviour
         boardModel.AddBrick(this,posX, posY);
         GetComponent<Renderer>().enabled = true;
         fusionned = false;
+    }
+
+    public virtual bool IsEmpty()
+    {
+        return false;
+    }
+
+    public override string ToString()
+    {
+        return "Brick " + objectiveType;
     }
 
 }
